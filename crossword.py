@@ -191,8 +191,15 @@ class Crossword():
         return True
 
     def find_word(self, coord_dir):
-        coord_dir_list = coord_dir.split(',')
-        coord = (int(coord_dir_list[0]), int(coord_dir_list[1]))
+        try:
+            coord_dir_list = coord_dir.split(',')
+            coord = (int(coord_dir_list[0]), int(coord_dir_list[1]))
+        except ValueError, e:
+            print e
+            return
+        except IndexError, e:
+            print e
+            return
         # get all possible across and down suggestions
         while True:
             print('pick a direction (down, across or back/quit)')
