@@ -76,6 +76,14 @@ class Crossword():
         while 1:
             print('where should i create a word? ("x, y")')
             res = raw_input()
+            if res in ['u', 'undo', 'Q']:
+                print "UNDOING LAST MOVE"
+                if self.stack:
+                    self.board = self.stack.pop()
+                    self.pretty_print_board()
+
+                continue
+
             if res in ['Q', 'q', 'quit']: break
             self.find_word(res)
 
@@ -113,11 +121,10 @@ class Crossword():
                     letters.append(letter)
         return letters
 
-    def add_new_word_to_board(self, new_word, position, direction):
+    def add_new_word_to_board(self, new_word, position, direction, tentative=True):
         x = position[0]
         y = position[1]
         self.stack.append([[r for r in row] for row in self.board])
-        print "PLACING", position, new_word
 
         if direction == 'across':
             od = 'down'
@@ -127,10 +134,14 @@ class Crossword():
                 down = self.get_letters(s, 'down')
                 if len(down) == 1 or not ' ' in down:
                     continue
-                sugg = self.suggest_words(down)
-                print len(sugg), "POSSIBLE WORDS AT", s, "DOWN"
+
+                sugg = self.suggest_words(down, tentative)
+                if not tentative:
+                    print len(sugg), "POSSIBLE WORDS AT", s, "DOWN"
+
                 if not sugg:
-                    print "NO WORDS AVAILABLE AT", s, ''.join(down)
+                    if not tentative:
+                        print "NO WORDS AVAILABLE AT", s, ''.join(down)
                     self.board = self.stack.pop()
                     return
         else:
@@ -142,35 +153,56 @@ class Crossword():
                 if len(across) == 1 or not ' ' in across:
                     continue
 
-                sugg = self.suggest_words(across)
-                print len(sugg), "POSSIBLE WORDS AT", s, "ACROSS"
+                sugg = self.suggest_words(across, tentative)
+                if not tentative:
+                    print len(sugg), "POSSIBLE WORDS AT", s, "ACROSS"
                 if not sugg:
-                    print "NO WORDS AVAILABLE AT", s, ''.join(across)
+                    # print "NO WORDS AVAILABLE AT", s, ''.join(across)
                     self.board = self.stack.pop()
                     return
+
+        return True
 
     def find_word(self, coord_dir):
         coord_dir_list = coord_dir.split(',')
         coord = (int(coord_dir_list[0]), int(coord_dir_list[1]))
         # get all possible across and down suggestions
-        print('pick a direction')
-        pick_direction = raw_input()
-        if pick_direction in ['across', 'a', 'A']:
-            across = self.get_letters(coord, 'across')
-            print(self.suggest_words(across))
-            print('pick a word for across')
-            new_across = raw_input()
-            self.add_new_word_to_board(new_across, coord, 'across')
-            self.pretty_print_board()
-        elif pick_direction in ['down', 'd', 'D']:
-            down = self.get_letters(coord, 'down')
-            print(self.suggest_words(down))
-            print('pick a word for down')
-            new_down = raw_input()
-            self.add_new_word_to_board(new_down, coord, 'down')
-            self.pretty_print_board()
-        else:
+        while True:
+            print('pick a direction (down, across or back/quit)')
+            pick_direction = raw_input()
+            if pick_direction in ['across', 'a', 'A']:
+                pick_direction = 'across'
+                break
+            elif pick_direction in ['down', 'd', 'D']:
+                pick_direction = 'down'
+                break
+            elif pick_direction in ['back', 'b', 'quit', 'q']:
+                return
+
+
+        try:
+            word = self.get_letters(coord, pick_direction)
+        except:
+            print "INVALID COORDINATES", coord, pick_direction
             return
+
+        suggested = self.suggest_words(word)
+        possible = []
+        for w in suggested:
+            added = self.add_new_word_to_board(w, coord, pick_direction)
+            if added:
+                possible.append(w)
+                self.board = self.stack.pop()
+
+        if not possible:
+            print "NO POSSIBLE WORDS FOR", coord, pick_direction
+            return
+
+        print possible
+        print 'pick a word for', pick_direction
+        new_word = raw_input()
+        self.add_new_word_to_board(new_word, coord, pick_direction, tentative=False)
+        self.pretty_print_board()
 
     def get_start_of_word(self, position, direction):
         # if across decrement x until edge or black square
@@ -191,7 +223,7 @@ class Crossword():
 
         return position
 
-    def suggest_words(self, restriction):
+    def suggest_words(self, restriction, at_least_one=False):
         suggested_words = []
         for word in self.all_words:
             if len(word) == len(restriction):
@@ -203,6 +235,9 @@ class Crossword():
                         pass
                 else:
                     suggested_words.append(word)
+                    if at_least_one:
+                        return suggested_words
+
         return suggested_words
 
 if __name__ == '__main__':
