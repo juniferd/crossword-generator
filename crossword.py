@@ -1,11 +1,12 @@
 import sys
 BLOCKS = {
-    'black': u'\u2b1b',
-    'white': u'\u2b1c',
+    'black': 'x',
+    'white': '_',
 }
 
 class Crossword():
     def __init__(self, board_width, board_height, blocks=[], anchor_words=[]):
+        self.stack = []
         self.board_width = board_width
         self.board_height = board_height
         self.blocks = self.generate_block_dict(blocks)
@@ -13,6 +14,7 @@ class Crossword():
         self.board = self.generate_board()
         self.all_words = self.read_words()
         self.terminal_commands()
+
 
     def generate_anchor_words_dict(self, anchor_words):
         anchors = {}
@@ -66,8 +68,8 @@ class Crossword():
             row = self.board[i]
             print_row = ''
             for j in range(len(row)):
-                print_row += row[j] + ' '
-            print(print_row).encode('utf-8')
+                print_row += row[j]
+            print(print_row)
 
     def terminal_commands(self):
         self.pretty_print_board()
@@ -114,12 +116,38 @@ class Crossword():
     def add_new_word_to_board(self, new_word, position, direction):
         x = position[0]
         y = position[1]
+        self.stack.append([[r for r in row] for row in self.board])
+        print "PLACING", position, new_word
+
         if direction == 'across':
+            od = 'down'
             for i, letter in enumerate(new_word):
                 self.board[y][x + i] = letter.upper()
+                s = self.get_start_of_word([x+i, y], od)
+                down = self.get_letters(s, 'down')
+                if len(down) == 1 or not ' ' in down:
+                    continue
+                sugg = self.suggest_words(down)
+                print len(sugg), "POSSIBLE WORDS AT", s, "DOWN"
+                if not sugg:
+                    print "NO WORDS AVAILABLE AT", s, ''.join(down)
+                    self.board = self.stack.pop()
+                    return
         else:
+            od = 'across'
             for i, letter in enumerate(new_word):
                 self.board[y + i][x] = letter.upper()
+                s = self.get_start_of_word([x, y+i], od)
+                across = self.get_letters(s, 'across')
+                if len(across) == 1 or not ' ' in across:
+                    continue
+
+                sugg = self.suggest_words(across)
+                print len(sugg), "POSSIBLE WORDS AT", s, "ACROSS"
+                if not sugg:
+                    print "NO WORDS AVAILABLE AT", s, ''.join(across)
+                    self.board = self.stack.pop()
+                    return
 
     def find_word(self, coord_dir):
         coord_dir_list = coord_dir.split(',')
@@ -147,11 +175,24 @@ class Crossword():
     def get_start_of_word(self, position, direction):
         # if across decrement x until edge or black square
         # if down decrement y until edge or black square
-        pass
+        if direction == 'down':
+            dx = 1
+        else:
+            dx = 0
+
+        while position[dx] > 0:
+            if self.board[position[1]][position[0]] == 'x':
+                position[dx] += 1
+                break
+            position[dx] -= 1
+
+        if self.board[position[1]][position[0]] == 'x':
+            position[dx] += 1
+
+        return position
 
     def suggest_words(self, restriction):
         suggested_words = []
-        print('restrictions', restriction)
         for word in self.all_words:
             if len(word) == len(restriction):
                 for i, letter in enumerate(restriction):
