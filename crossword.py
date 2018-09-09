@@ -1,6 +1,8 @@
 import sys
+import time
+
 BLOCKS = {
-    'black': 'x',
+    'black': '#',
     'white': '_',
 }
 
@@ -13,7 +15,8 @@ class Crossword():
         self.anchor_words = self.generate_anchor_words_dict(anchor_words)
         self.board = self.generate_board()
         self.all_words = self.read_words()
-        self.terminal_commands()
+        self.dictionary = {}
+        self.prepare_words()
 
 
     def generate_anchor_words_dict(self, anchor_words):
@@ -62,6 +65,36 @@ class Crossword():
             words = [line.rstrip() for line in f]
         return words
 
+    def print_start_squares(self):
+        checked = {}
+        for x in xrange(self.board_width):
+            for y in xrange(self.board_height):
+                if self.board[y][x] == 'X':
+                    continue
+
+                for d in ['across', 'down']:
+                    s = self.get_start_of_word([x, y], d)
+                    sk = "%s,%s,%s" % (s[0], s[1], d)
+                    if not sk in checked:
+                        word = self.get_letters(s, d)
+                        if len(word) <= 1:
+                            continue
+
+                        w = ''.join(word).lower()
+                        sugg = []
+                        if not ' ' in word:
+                            if w in self.dictionary:
+                                sugg = [w]
+                        else:
+                            checked[sk] = 1
+                            sugg = self.suggest_words(word)
+                            print len(sugg), "WORDS AT", s, d
+
+                        if len(sugg) == 0:
+                            print "INVALID WORD AT", s, w, ", UNDOING MOVE"
+                            self.board = self.stack.pop()
+                            self.pretty_print_board()
+
     def pretty_print_board(self):
         # print board here
         for i in range(len(self.board)):
@@ -81,6 +114,7 @@ class Crossword():
                 if self.stack:
                     self.board = self.stack.pop()
                     self.pretty_print_board()
+                    self.print_start_squares()
 
                 continue
 
@@ -121,7 +155,7 @@ class Crossword():
                     letters.append(letter)
         return letters
 
-    def add_new_word_to_board(self, new_word, position, direction, tentative=True):
+    def add_new_word_to_board(self, new_word, position, direction):
         x = position[0]
         y = position[1]
         self.stack.append([[r for r in row] for row in self.board])
@@ -135,13 +169,8 @@ class Crossword():
                 if len(down) == 1 or not ' ' in down:
                     continue
 
-                sugg = self.suggest_words(down, tentative)
-                if not tentative:
-                    print len(sugg), "POSSIBLE WORDS AT", s, "DOWN"
-
+                sugg = self.suggest_words(down)
                 if not sugg:
-                    if not tentative:
-                        print "NO WORDS AVAILABLE AT", s, ''.join(down)
                     self.board = self.stack.pop()
                     return
         else:
@@ -153,9 +182,7 @@ class Crossword():
                 if len(across) == 1 or not ' ' in across:
                     continue
 
-                sugg = self.suggest_words(across, tentative)
-                if not tentative:
-                    print len(sugg), "POSSIBLE WORDS AT", s, "ACROSS"
+                sugg = self.suggest_words(across)
                 if not sugg:
                     # print "NO WORDS AVAILABLE AT", s, ''.join(across)
                     self.board = self.stack.pop()
@@ -186,6 +213,7 @@ class Crossword():
             print "INVALID COORDINATES", coord, pick_direction
             return
 
+        print "FINDING SUGGESTIONS", word
         suggested = self.suggest_words(word)
         possible = []
         for w in suggested:
@@ -198,11 +226,14 @@ class Crossword():
             print "NO POSSIBLE WORDS FOR", coord, pick_direction
             return
 
+        print "FILTERED ", len(suggested), "TO", len(possible)
         print possible
         print 'pick a word for', pick_direction
         new_word = raw_input()
-        self.add_new_word_to_board(new_word, coord, pick_direction, tentative=False)
+        self.add_new_word_to_board(new_word, coord, pick_direction)
+
         self.pretty_print_board()
+        self.print_start_squares()
 
     def get_start_of_word(self, position, direction):
         # if across decrement x until edge or black square
@@ -213,32 +244,73 @@ class Crossword():
             dx = 0
 
         while position[dx] > 0:
-            if self.board[position[1]][position[0]] == 'x':
+            if self.board[position[1]][position[0]] == '#':
                 position[dx] += 1
                 break
             position[dx] -= 1
 
-        if self.board[position[1]][position[0]] == 'x':
+        if self.board[position[1]][position[0]] == '#':
             position[dx] += 1
 
         return position
 
-    def suggest_words(self, restriction, at_least_one=False):
-        suggested_words = []
-        for word in self.all_words:
-            if len(word) == len(restriction):
-                for i, letter in enumerate(restriction):
-                    if letter != ' ' and letter.lower() != word[i].lower():
-                        break
-                    elif letter == ' ':
-                        # check in other direction for all possible words
-                        pass
-                else:
-                    suggested_words.append(word)
-                    if at_least_one:
-                        return suggested_words
 
-        return suggested_words
+    def prepare_words(self):
+        # word_lookup[length][index][letter] = all words of size length with letter in position index
+        self.word_lookup = [{} for i in xrange(50)]
+        self.words_of_size = [[] for i in xrange(50)]
+        start = time.time()
+        for word in self.all_words:
+            self.words_of_size[len(word)].append(word)
+            self.dictionary[word.lower()] = True
+
+            table = self.word_lookup[len(word)]
+            for i in xrange(len(word)):
+                k = word[i].lower()
+
+                if not i in table:
+                    table[i] = {}
+
+                if not k in table[i]:
+                    table[i][k] = []
+
+                table[i][k].append(word)
+
+        for table in self.word_lookup:
+            for i in table:
+                for k in table[i]:
+                    table[i][k] = set(table[i][k])
+
+        end = time.time()
+
+        print "MAKING WORDS TOOK", end - start
+
+    def suggest_words(self, restriction):
+        suggested_words = []
+        word_table = self.word_lookup[len(restriction)]
+        sets = []
+        has_letter = False
+        for i, letter in enumerate(restriction):
+            if letter.strip() != '':
+                has_letter = True
+                try:
+                    sets.append(word_table[i][letter.lower()])
+                except Exception, e:
+                    print e
+                    continue
+
+        if not has_letter:
+            # word must be blank?
+            return [w for w in self.words_of_size[len(restriction)]]
+
+        if sets:
+            ret = set([s for s in sets[0]])
+            for s in sets:
+                ret = ret.intersection(s)
+
+            return ret
+
+        return []
 
 if __name__ == '__main__':
     black_squares = [
@@ -250,3 +322,5 @@ if __name__ == '__main__':
         ('aloe', (0, 2), 'across')
     ]
     crossword = Crossword(4, 5, black_squares, anchor_words)
+    crossword.terminal_commands()
+
