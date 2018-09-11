@@ -5,6 +5,47 @@ BLOCKS = {
     'black': '#',
     'white': '_',
 }
+def turn_into_integers(arr):
+    return map(lambda x: int(x), arr)
+
+def terminal_commands():
+    print('how big is this board? ("width, height")')
+    (width, height) = turn_into_integers(raw_input().split(','))
+    print('where would you like to place your black squares? ("x, y")')
+    black_squares = []
+    while 1:
+        black_square = raw_input()
+        if black_square in ['', 'stop', '\n']: break
+        black_squares.append(tuple(turn_into_integers(black_square.split(','))))
+        print('add another or press enter to stop adding black squares')
+
+    print('where would you like to place anchor words? ("word, x, y, direction")')
+    anchors = []
+    while 1:
+        anchor = raw_input()
+        if anchor in ['', 'stop', '\n']: break
+        anchor_list = anchor.split(',')
+        anchor_pos = tuple(turn_into_integers([anchor_list[1], anchor_list[2]]))
+        anchors.append(tuple([anchor_list[0], anchor_pos, anchor_list[3]]))
+        print('add another or press enter to stop adding anchors')
+
+    crossword = Crossword(width, height, black_squares, anchors)
+    crossword.pretty_print_board()
+
+    while 1:
+        print('where should i create a word? ("x, y")')
+        res = raw_input()
+        if res in ['u', 'undo', 'Q']:
+            print "UNDOING LAST MOVE"
+            if crossword.stack:
+                crossword.board = crossword.stack.pop()
+                crossword.pretty_print_board()
+                crossword.print_start_squares()
+
+            continue
+
+        if res in ['Q', 'q', 'quit']: break
+        crossword.find_word(res)
 
 class Crossword():
     def __init__(self, board_width, board_height, blocks=[], anchor_words=[]):
@@ -104,22 +145,6 @@ class Crossword():
                 print_row += row[j]
             print(print_row)
 
-    def terminal_commands(self):
-        self.pretty_print_board()
-        while 1:
-            print('where should i create a word? ("x, y")')
-            res = raw_input()
-            if res in ['u', 'undo', 'Q']:
-                print "UNDOING LAST MOVE"
-                if self.stack:
-                    self.board = self.stack.pop()
-                    self.pretty_print_board()
-                    self.print_start_squares()
-
-                continue
-
-            if res in ['Q', 'q', 'quit']: break
-            self.find_word(res)
 
     def add_letter(self, letter):
         if letter == BLOCKS['white']:
@@ -256,8 +281,9 @@ class Crossword():
                 break
             position[dx] -= 1
 
-        if self.board[position[1]][position[0]] == '#':
-            position[dx] += 1
+        if position[1] < self.board_height and position[0] < self.board_width:
+            if self.board[position[1]][position[0]] == '#':
+                position[dx] += 1
 
         return position
 
@@ -320,14 +346,15 @@ class Crossword():
         return []
 
 if __name__ == '__main__':
-    black_squares = [
-        (0, 0),
-        (0, 1),
-        (2, 1)
-    ]
-    anchor_words = [
-        ('aloe', (0, 2), 'across')
-    ]
-    crossword = Crossword(4, 5, black_squares, anchor_words)
-    crossword.terminal_commands()
+    # black_squares = [
+    #     (0, 0),
+    #     (0, 1),
+    #     (2, 1)
+    # ]
+    # anchor_words = [
+    #     ('aloe', (0, 2), 'across')
+    # ]
+    # crossword = Crossword(4, 5, black_squares, anchor_words)
+    # crossword.terminal_commands()
+    terminal_commands()
 
