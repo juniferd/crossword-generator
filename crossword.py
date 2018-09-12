@@ -48,6 +48,52 @@ def terminal_commands():
         crossword.find_word(res)
 
 class Crossword():
+    __prepared__ = False
+    dictionary = {}
+    word_lookup = [{} for i in xrange(50)]
+    words_of_size = [[] for i in xrange(50)]
+
+    @classmethod
+    def read_words(self):
+        # use system dictionary for words
+        with open('/usr/share/dict/words') as f:
+            words = [line.rstrip() for line in f]
+        return words
+
+    @classmethod
+    def prepare_words(self):
+        if self.__prepared__:
+            return
+
+        self.all_words = self.read_words()
+        self.__prepared__ = True
+        # word_lookup[length][index][letter] = all words of size length with letter in position index
+        start = time.time()
+        for word in self.all_words:
+            self.words_of_size[len(word)].append(word)
+            self.dictionary[word.lower()] = True
+
+            table = self.word_lookup[len(word)]
+            for i in xrange(len(word)):
+                k = word[i].lower()
+
+                if not i in table:
+                    table[i] = {}
+
+                if not k in table[i]:
+                    table[i][k] = []
+
+                table[i][k].append(word)
+
+        for table in self.word_lookup:
+            for i in table:
+                for k in table[i]:
+                    table[i][k] = set(table[i][k])
+
+        end = time.time()
+
+        print "MAKING WORDS TOOK", end - start
+
     def __init__(self, board_width=10, board_height=10, blocks=[], anchor_words=[]):
         self.stack = []
         self.board_width = board_width
@@ -56,7 +102,6 @@ class Crossword():
         self.anchor_words = self.generate_anchor_words_dict(anchor_words)
         self.board = self.generate_board()
         self.all_words = self.read_words()
-        self.dictionary = {}
         self.prepare_words()
 
 
@@ -99,12 +144,6 @@ class Crossword():
                     row.append(BLOCKS['white'])
             board.append(row)
         return board
-
-    def read_words(self):
-        # use system dictionary for words
-        with open('/usr/share/dict/words') as f:
-            words = [line.rstrip() for line in f]
-        return words
 
     def print_start_squares(self):
         checked = {}
@@ -286,37 +325,6 @@ class Crossword():
                 position[dx] += 1
 
         return position
-
-
-    def prepare_words(self):
-        # word_lookup[length][index][letter] = all words of size length with letter in position index
-        self.word_lookup = [{} for i in xrange(50)]
-        self.words_of_size = [[] for i in xrange(50)]
-        start = time.time()
-        for word in self.all_words:
-            self.words_of_size[len(word)].append(word)
-            self.dictionary[word.lower()] = True
-
-            table = self.word_lookup[len(word)]
-            for i in xrange(len(word)):
-                k = word[i].lower()
-
-                if not i in table:
-                    table[i] = {}
-
-                if not k in table[i]:
-                    table[i][k] = []
-
-                table[i][k].append(word)
-
-        for table in self.word_lookup:
-            for i in table:
-                for k in table[i]:
-                    table[i][k] = set(table[i][k])
-
-        end = time.time()
-
-        print "MAKING WORDS TOOK", end - start
 
     def suggest_words(self, restriction):
         suggested_words = []
