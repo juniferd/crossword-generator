@@ -48,7 +48,7 @@ def terminal_commands():
         crossword.find_word(res)
 
 class Crossword():
-    def __init__(self, board_width, board_height, blocks=[], anchor_words=[]):
+    def __init__(self, board_width=10, board_height=10, blocks=[], anchor_words=[]):
         self.stack = []
         self.board_width = board_width
         self.board_height = board_height
