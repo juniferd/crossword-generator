@@ -44,17 +44,20 @@ def get_suggestions(cls, board, x, y):
 
     print("X, Y", x, y)
 
-    print cw.board_height
-
-    down = cw.get_letters((x, y), 'down')
-    across = cw.get_letters((x, y), 'across')
+    s = cw.get_start_of_word([x, y], 'across')
+    across = cw.get_letters(s, 'across')
 
     suggested = cw.suggest_words(across)
+    possible = cw.filter_suggested(suggested, s, 'across')
+
+    s = cw.get_start_of_word([x, y], 'down')
+    down = cw.get_letters(s, 'down')
     suggested2 = cw.suggest_words(down)
+    possible2 = cw.filter_suggested(suggested2, s, 'down')
 
     return {
-        "across" : list(suggested),
-        "down" : list(suggested2)
+        "across" : list(possible),
+        "down" : list(possible2)
     }
 
 @app.route('/')

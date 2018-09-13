@@ -2,16 +2,40 @@ class MyComponent extends React.Component{
 
   constructor(props){
     super(props);
-    this.state = { board: props.board };
+    this.state = { board: props.board, direction: 0  };
   }
 
-  onClicked(j, i) {
-    this.rpc.cell_changed(j, i);
+  onClicked(j, i, e) {
+    this.cell_changed(j, i);
+
+    if (j == this.state.x && i == this.state.y) {
+      this.state.direction = !this.state.direction;
+      this.getSuggestions();
+    }
+
+    e.target.setSelectionRange(0, 10);
+
+
+
+
+  }
+
+  onKeydown(j,i,e) {
+    // TODO: detect backspace and move forward
   }
 
   onChanged(j, i, e) {
-    console.log("THIS CELL CHANGED", j, i, e);
-    this.state.board[j][i] = e.target.value;
+    // only can have one letter at a time in the board
+    var val = e.target.value;
+    if (val) {
+      val = val[val.length-1];
+    } else {
+      val = "";
+    }
+
+    this.state.board[j][i] = val;
+    e.target.value = val;
+    this.forceUpdate();
   }
 
   cell_changed(x, y) {
@@ -24,11 +48,12 @@ class MyComponent extends React.Component{
   getSuggestions() {
     console.log("GETTING SUGGESTIONS FOR WORD AT", this.state.x, this.state.y);
 
-    this.rpc.get_suggestions(this.state.board, this.state.x, this.state.y).done(function(res, err) {
+    this.rpc.get_suggestions(this.state.board, this.state.y, this.state.x).done(function(res, err) {
       console.log("RES", res);
     });
 
   }
+
   toggleSquare() {
 
   }
@@ -40,9 +65,20 @@ class MyComponent extends React.Component{
       return (<div className='row'>
         {
           row.map(function(cell, j) {
-            return <input type='text' className='cell'
+            var classes = "cell ";
+            if ((j == self.state.x && self.state.direction) ||
+                (i == self.state.y && !self.state.direction)) {
+              classes += " highlight";
+            }
+
+            if (board[j][i] == '#') {
+              classes += ' blocked'
+            }
+
+            return <input type='text' className={classes}
+              onKeydown={(e) => { self.onKeydown(j,i,e) }}
               onChange={(e) => { self.onChanged(j, i, e) }}
-              onClick={() => { self.onClicked(j, i) }} / >
+              onClick={(e) => { self.onClicked(j, i, e) }} value={board[j][i]}/ >
           })
         }
       </div>);
@@ -53,10 +89,6 @@ class MyComponent extends React.Component{
           { rows }
       </div>
 
-      <div className='controls mtl'>
-        <div onClick={self.getSuggestions.bind(self)} >Get Suggestions</div>
-        <div onClick={self.toggleSquare.bind(self)} >Block/Unblock Square</div>
-      </div>
     </div>
 
   }

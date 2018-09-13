@@ -5,8 +5,12 @@
 .cell {
   display: inline-block;
   padding: 10px;
+  text-align: center;
+  font-size: 20px;
   cursor: pointer;
   border-style: dotted;
+  text-transform: capitalize;
+  border-width: 1px;
 
   &:hover {
     background-color: #faf;
@@ -15,4 +19,13 @@
 
 input.cell {
   width: 40px;
+}
+
+.cell.highlight {
+  border-style: solid;
+  border-width: 2px;
+}
+
+.cell.blocked {
+  background-color: black;
 }

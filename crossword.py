@@ -94,7 +94,7 @@ class Crossword():
 
         print "MAKING WORDS TOOK", end - start
 
-    def __init__(self, board_width=10, board_height=10, blocks=[], anchor_words=[]):
+    def __init__(self, board_width=5, board_height=5, blocks=[], anchor_words=[]):
         self.stack = []
         self.board_width = board_width
         self.board_height = board_height
@@ -254,15 +254,25 @@ class Crossword():
 
         return True
 
+    def filter_suggested(self, suggested, coord, pick_direction):
+        possible = []
+        for w in suggested:
+            added = self.add_new_word_to_board(w, coord, pick_direction)
+            if added:
+                possible.append(w)
+                self.board = self.stack.pop()
+
+        return possible
+
     def find_word(self, coord_dir):
         try:
             coord_dir_list = coord_dir.split(',')
             coord = (int(coord_dir_list[0]), int(coord_dir_list[1]))
         except ValueError, e:
-            print e
+            print "VALUE ERR", e
             return
         except IndexError, e:
-            print e
+            print "INDEX ERR", e
             return
         # get all possible across and down suggestions
         while True:
@@ -286,12 +296,7 @@ class Crossword():
 
         print "FINDING SUGGESTIONS", word
         suggested = self.suggest_words(word)
-        possible = []
-        for w in suggested:
-            added = self.add_new_word_to_board(w, coord, pick_direction)
-            if added:
-                possible.append(w)
-                self.board = self.stack.pop()
+        possible = self.filter_suggested(suggested, coord, pick_direction)
 
         if not possible:
             print "NO POSSIBLE WORDS FOR", coord, pick_direction
@@ -337,7 +342,6 @@ class Crossword():
                 try:
                     sets.append(word_table[i][letter.lower()])
                 except Exception, e:
-                    print e
                     continue
 
         if not has_letter:
