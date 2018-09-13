@@ -1,11 +1,7 @@
 var Button = require('../Button/Button');
 var List = require('./List');
 
-var utils = require("common/util");
-
-$C("Button", function(m) {
-  utils.inject_css("scoped_Button", m.css);
-});
+var ScopedCss = require("common/scoped_css");
 
 class MyComponent extends React.Component{
 
@@ -116,7 +112,7 @@ class MyComponent extends React.Component{
         <div className='crossword'>
             { rows }
         </div>
-        <Button className="scoped_Button" style="display: none;"
+        <Button className={ScopedCss("Button")}
           onClick={() => this.getSuggestions()}
           text={'Fetch Suggestions'} />
         <List
