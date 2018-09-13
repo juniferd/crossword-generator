@@ -1,3 +1,5 @@
+var React = require("vendor/react");
+
 class List extends React.Component {
   constructor(props) {
     super(props);

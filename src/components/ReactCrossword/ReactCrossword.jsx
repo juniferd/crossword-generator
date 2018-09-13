@@ -1,9 +1,12 @@
 var Button = require('../Button/Button');
 var List = require('./List');
+var React = require("vendor/react");
 
-var ScopedCss = require("common/scoped_css");
+var cssUtils = require("common/css_utils");
+var WaitForCss = cssUtils.WaitForCss;
+var ScopedCss = cssUtils.ScopedCss;
 
-class MyComponent extends React.Component{
+default class MyComponent extends React.Component{
 
   constructor(props){
     super(props);
@@ -50,7 +53,13 @@ class MyComponent extends React.Component{
     board[j][i] = val;
     this.setState({ board });
     e.target.value = val;
-    // this.forceUpdate();
+
+    if (this.state.isDown)  {
+      this.state.x += 1;
+    } else {
+      this.state.y += 1;
+    }
+
   }
 
   cell_changed(y, x) {
@@ -82,6 +91,10 @@ class MyComponent extends React.Component{
         classes += " highlight";
     }
 
+    if (j == y && i == x) {
+      classes += " focused";
+    }
+
     if (cellVal == '#') {
       classes += ' blocked'
     }
@@ -108,7 +121,7 @@ class MyComponent extends React.Component{
     });
 
     return (
-      <div>
+      <div className={WaitForCss("Button")}>
         <div className='crossword'>
             { rows }
         </div>
@@ -125,5 +138,3 @@ class MyComponent extends React.Component{
     );
   }
 }
-
-module.exports = MyComponent;
