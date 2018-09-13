@@ -9,7 +9,11 @@ import pudgy
 pudgy.register_blueprint(app)
 pudgy.Component.set_base_dir(os.path.join(app.root_path, "components"))
 
-pudgy.ReactComponent.add_babel_presets("@babel/preset-env")
+import dukpy
+def jsx_compile(data, fname):
+    return dukpy.jsx_compile(data)
+
+pudgy.ReactComponent.set_jsx_compiler(jsx_compile)
 
 class CrosswordComponent(pudgy.JinjaComponent, pudgy.SassComponent,
     pudgy.BackboneComponent, pudgy.ServerBridge):
@@ -19,6 +23,8 @@ class ReactCrossword(pudgy.ReactComponent, pudgy.SassComponent,
     pudgy.ServerBridge):
     pass
 
+class Button(pudgy.ReactComponent, pudgy.SassComponent):
+    pass
 
 def cell_changed(cls, x, y):
     print("CELL CHANGED", x,y)
