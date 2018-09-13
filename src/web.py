@@ -9,6 +9,8 @@ import pudgy
 pudgy.register_blueprint(app)
 pudgy.Component.set_base_dir(os.path.join(app.root_path, "components"))
 
+pudgy.ReactComponent.add_babel_presets("@babel/preset-env")
+
 class CrosswordComponent(pudgy.JinjaComponent, pudgy.SassComponent,
     pudgy.BackboneComponent, pudgy.ServerBridge):
     pass
@@ -17,16 +19,11 @@ class ReactCrossword(pudgy.ReactComponent, pudgy.SassComponent,
     pudgy.ServerBridge):
     pass
 
+
 def cell_changed(cls, x, y):
     print("CELL CHANGED", x,y)
     cls.call("cell_changed", x, y);
 
-ReactCrossword.api(cell_changed)
-CrosswordComponent.api(cell_changed)
-
-
-
-@CrosswordComponent.api
 def rerender(cls, board):
     cw = crossword.Crossword()
     cw.board_height = len(board)
@@ -39,7 +36,6 @@ def rerender(cls, board):
 
     return cls.replace_html(cc.render())
 
-@CrosswordComponent.api
 def get_suggestions(cls, board, x, y):
     cw = crossword.Crossword()
     cw.board_height = len(board)
@@ -61,8 +57,6 @@ def get_suggestions(cls, board, x, y):
         "down" : list(suggested2)
     }
 
-
-
 @app.route('/')
 def get_crossword():
     cw = crossword.Crossword()
@@ -72,6 +66,11 @@ def get_crossword():
     cc.set_ref("crossword")
 
     return flask.render_template("crossword.html", crossword=cc)
+
+API = [ get_suggestions, rerender, cell_changed ]
+for a in API:
+    CrosswordComponent.api(a)
+    ReactCrossword.api(a)
 
 if __name__ == "__main__":
     app.run(port=3333)
