@@ -95,9 +95,17 @@ export default class MyComponent extends React.Component{
   getSuggestions() {
     console.log("GETTING SUGGESTIONS FOR WORD AT", this.state.x, this.state.y);
 
+    var isDown = this.state.isDown;
     this.rpc.get_suggestions(this.state.board, this.state.x, this.state.y).done(function(res, err) {
-      this.setState({ suggestions: res });
       console.log("RES", res);
+
+      if (isDown) {
+        res.down = null;
+      } else {
+        res.across = null;
+      }
+
+      this.setState({ suggestions: res });
     });
 
   }

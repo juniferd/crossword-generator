@@ -11,7 +11,7 @@ class List extends React.Component {
     } = this.props;
     return (
       <div>
-        <p>{ title }</p>
+        <p>{ suggestions ? title : ""}</p>
         <ul>
           {
             suggestions && suggestions.map((item, i) => {
