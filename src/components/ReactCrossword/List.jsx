@@ -10,7 +10,7 @@ class List extends React.Component {
       suggestions,
     } = this.props;
     return (
-      <div>
+      <div className='suggestions'>
         <p>{ suggestions ? title : ""}</p>
         <ul>
           {
