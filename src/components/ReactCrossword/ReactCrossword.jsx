@@ -12,7 +12,7 @@ export default class MyComponent extends React.Component{
     super(props);
     this.state = {
       board: props.board,
-      isDown: true,
+      isAcross: true,
       suggestions: {},
     };
   }
@@ -25,7 +25,7 @@ export default class MyComponent extends React.Component{
     const {
       x,
       y,
-      isDown,
+      isAcross,
     } = this.state;
 
 
@@ -33,7 +33,7 @@ export default class MyComponent extends React.Component{
     this.setState({ x: i, y: j });
     // switch direction if clicking on the same square
     if (j == y && i == x) {
-      this.setState({ isDown: !this.state.isDown });
+      this.setState({ isAcross: !this.state.isAcross });
     }
   }
 
@@ -56,7 +56,7 @@ export default class MyComponent extends React.Component{
         character = '_';
         inc = -1;
       } else if (e.keyCode == 9) {
-        this.state.isDown = !this.state.isDown;
+        this.state.isAcross = !this.state.isAcross;
         e.preventDefault();
         this.forceUpdate();
         return;
@@ -74,7 +74,7 @@ export default class MyComponent extends React.Component{
 
     this.state.board[this.state.y][this.state.x] = character;
 
-    if (this.state.isDown)  {
+    if (this.state.isAcross)  {
       this.state.x += inc;
     } else {
       this.state.y += inc;
@@ -95,27 +95,29 @@ export default class MyComponent extends React.Component{
   getSuggestions() {
     console.log("GETTING SUGGESTIONS FOR WORD AT", this.state.x, this.state.y);
 
-    var isDown = this.state.isDown;
-    this.rpc.get_suggestions(this.state.board, this.state.x, this.state.y).done(function(res, err) {
-      console.log("RES", res);
+    var isAcross = this.state.isAcross;
+    this
+      .rpc
+      .get_suggestions(this.state.board, this.state.x, this.state.y)
+      .kwargs({ down: !this.state.isAcross, across: this.state.isAcross})
+      .done(function(res, err) {
+        if (isAcross) {
+          res.down = null;
+        } else {
+          res.across = null;
+        }
 
-      if (isDown) {
-        res.down = null;
-      } else {
-        res.across = null;
-      }
-
-      this.setState({ suggestions: res });
+        this.setState({ suggestions: res });
     });
 
   }
 
   getCellClass(j, i, cellVal) {
-    const { x, y, isDown } = this.state;
+    const { x, y, isAcross } = this.state;
     let classes = 'cell';
 
-    if ((j == y && isDown) ||
-      (i == x && !isDown)) {
+    if ((j == y && isAcross) ||
+      (i == x && !isAcross)) {
         classes += " highlight";
     }
 
@@ -130,7 +132,7 @@ export default class MyComponent extends React.Component{
   }
 
   render() {
-    const { board, x, y, isDown, suggestions } = this.state;
+    const { board, x, y, isAcross, suggestions } = this.state;
     const rows = board.map((row, j) => {
       return (
         <div className='row' key={j}>

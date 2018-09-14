@@ -42,24 +42,28 @@ def rerender(cls, board):
 
     return cls.replace_html(cc.render())
 
-def get_suggestions(cls, board, x, y):
+def get_suggestions(cls, board, x, y, down=False, across=False):
     cw = crossword.Crossword()
     cw.board_height = len(board)
     cw.board_width = len(board[0])
     cw.board = board
 
-    print("X, Y", x, y)
+    print("X, Y", x, y, down, across)
 
-    s = cw.get_start_of_word([x, y], 'across')
-    across = cw.get_letters(s, 'across')
+    possible = []
+    possible2 = []
 
-    suggested = cw.suggest_words(across)
-    possible = cw.filter_suggested(suggested, s, 'across')
+    if across:
+        s = cw.get_start_of_word([x, y], 'across')
+        across = cw.get_letters(s, 'across')
+        suggested = cw.suggest_words(across)
+        possible = cw.filter_suggested(suggested, s, 'across')
 
-    s = cw.get_start_of_word([x, y], 'down')
-    down = cw.get_letters(s, 'down')
-    suggested2 = cw.suggest_words(down)
-    possible2 = cw.filter_suggested(suggested2, s, 'down')
+    if down:
+        s = cw.get_start_of_word([x, y], 'down')
+        down = cw.get_letters(s, 'down')
+        suggested2 = cw.suggest_words(down)
+        possible2 = cw.filter_suggested(suggested2, s, 'down')
 
     return {
         "across" : list(possible),
