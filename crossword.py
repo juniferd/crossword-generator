@@ -145,6 +145,39 @@ class Crossword():
             board.append(row)
         return board
 
+    def get_start_squares(self):
+        checked = {}
+
+        down = {}
+        across = {}
+        for x in xrange(self.board_width):
+            for y in xrange(self.board_height):
+                if self.board[y][x] == 'X':
+                    continue
+
+                for d in ['across', 'down']:
+                    s = self.get_start_of_word([x, y], d)
+                    sk = "%s,%s,%s" % (s[0], s[1], d)
+                    if not sk in checked:
+                        word = self.get_letters(s, d)
+                        if len(word) <= 1:
+                            continue
+
+                        w = ''.join(word).lower()
+                        sugg = []
+                        if not ' ' in word:
+                            if w in self.dictionary:
+                                sugg = [w]
+                        else:
+                            sugg = self.suggest_words(word)
+
+                        if len(sugg) == 0 and self.stack:
+                            self.board = self.stack.pop()
+
+                        checked[sk] = len(sugg) or -1
+
+        return checked
+
     def print_start_squares(self):
         checked = {}
         for x in xrange(self.board_width):

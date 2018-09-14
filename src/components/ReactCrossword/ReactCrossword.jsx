@@ -12,9 +12,19 @@ export default class MyComponent extends React.Component{
     super(props);
     this.state = {
       board: props.board,
+      hist: {},
       isAcross: true,
       suggestions: {},
     };
+
+    var self = this;
+    _.each(self.state.board, function(row, j) {
+      self.state.hist[j] = {};
+      _.each(row, function(cell, i) {
+        self.state.hist[j][i] = {};
+      });
+    });
+
   }
 
   componentDidUpdate(prevProps, prevState) {
@@ -92,6 +102,42 @@ export default class MyComponent extends React.Component{
 
   }
 
+  validateBoard() {
+    var self = this;
+    self.state.hist = {};
+
+    this
+      .rpc
+      .get_all_suggestions(this.state.board)
+      .done(function(res, err) {
+        _.each(self.state.board, function(row, j) {
+          self.state.hist[j] = {};
+          _.each(row, function(cell, i) {
+            self.state.hist[j][i] = {};
+          });
+        });
+
+        _.each(res.squares, function(v, k) {
+          const [x, y, d] = k.split(",");
+
+          if (!self.state.hist[y]) {
+            self.state.hist[y] = [];
+          }
+
+          if (!self.state.hist[y][x]) {
+            self.state.hist[y][x] = {};
+          }
+
+          self.state.hist[y][x][d] = v;
+
+        });
+
+        self.forceUpdate();
+
+      });
+
+  }
+
   getSuggestions() {
     console.log("GETTING SUGGESTIONS FOR WORD AT", this.state.x, this.state.y);
 
@@ -133,6 +179,7 @@ export default class MyComponent extends React.Component{
 
   render() {
     const { board, x, y, isAcross, suggestions } = this.state;
+    var hist = this.state.hist;
     const rows = board.map((row, j) => {
       return (
         <div className='row' key={j}>
@@ -141,7 +188,19 @@ export default class MyComponent extends React.Component{
               return <span type='text'
                 key={i}
                 className={ this.getCellClass(j, i, board[j][i]) }
-                onClick={(e) => { this.onClicked(j, i, e) }}> {board[j][i]} </span>
+                onClick={(e) => { this.onClicked(j, i, e) }}>
+
+                {board[j][i]}
+
+
+                <span className='heatmap'>
+                  {hist[j][i]['across']? "a:" + hist[j][i].across : ""}
+                  <div> </div>
+                  {hist[j][i]['down']? "d:" + hist[j][i].down : ""}
+                </span>
+
+
+              </span>
             })
           }
         </div>
@@ -156,6 +215,9 @@ export default class MyComponent extends React.Component{
         <Button className={ScopedCss("Button")}
           onClick={() => this.getSuggestions()}
           text={'Fetch Suggestions'} />
+        <Button className={ScopedCss("Button")}
+          onClick={() => this.validateBoard()}
+          text={'Validate Board'} />
         <List
           title={'Across suggestions'}
           suggestions={suggestions.across} />

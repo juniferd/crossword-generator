@@ -14,6 +14,7 @@ def jsx_compile(data, fname):
     return dukpy.jsx_compile(data)
 
 pudgy.ReactComponent.set_jsx_compiler(jsx_compile)
+# pudgy.ReactComponent.add_babel_presets("@babel/preset-env")
 
 class CrosswordComponent(pudgy.JinjaComponent, pudgy.SassComponent,
     pudgy.BackboneComponent, pudgy.ServerBridge):
@@ -42,13 +43,24 @@ def rerender(cls, board):
 
     return cls.replace_html(cc.render())
 
-def get_suggestions(cls, board, x, y, down=False, across=False):
+
+def build_crossword(board):
     cw = crossword.Crossword()
     cw.board_height = len(board)
     cw.board_width = len(board[0])
     cw.board = board
+    return cw
 
-    print("X, Y", x, y, down, across)
+
+def get_all_suggestions(cls, board):
+    cw = build_crossword(board)
+    return {
+        "squares" : cw.get_start_squares()
+    }
+
+
+def get_suggestions(cls, board, x, y, down=False, across=False):
+    cw = build_crossword(board)
 
     possible = []
     possible2 = []
@@ -80,7 +92,7 @@ def get_crossword():
 
     return flask.render_template("crossword.html", crossword=cc)
 
-API = [ get_suggestions, rerender, cell_changed ]
+API = [ get_suggestions, get_all_suggestions, rerender, cell_changed ]
 for a in API:
     CrosswordComponent.api(a)
     ReactCrossword.api(a)
