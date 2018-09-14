@@ -1,5 +1,5 @@
-var Button = require('Button/Button');
-var List = require('./List');
+var Button = require('Button/Button.jsx');
+var List = require('./List.jsx');
 var React = require("vendor/react");
 
 var cssUtils = require("common/css_utils");
