@@ -51,6 +51,33 @@ def build_crossword(board):
     cw.board = board
     return cw
 
+def insert_row(cls, board, row):
+    print "insert row here"
+    new_board = []
+    for i in xrange(len(board)):
+        new_board.append(board[i])
+        if i == row:
+            new_board.append(["_"] * len(board[i]))
+    cw = build_crossword(new_board)
+    print "new board %s" % new_board
+    return {
+        "board": cw.board
+    }
+
+def insert_column(cls, board, col):
+    new_board = []
+    for row in board:
+        new_row = []
+        for i in xrange(len(row)):
+            new_row.append(row[i])
+            if i == col:
+                new_row.append("_")
+        new_board.append(new_row)
+    cw = build_crossword(new_board)
+    print "new board %s" % new_board
+    return {
+        "board": cw.board
+    }
 
 def get_all_suggestions(cls, board):
     cw = build_crossword(board)
@@ -92,7 +119,7 @@ def get_crossword():
 
     return flask.render_template("crossword.html", crossword=cc)
 
-API = [ get_suggestions, get_all_suggestions, rerender, cell_changed ]
+API = [ get_suggestions, get_all_suggestions, rerender, cell_changed, insert_row, insert_column ]
 for a in API:
     CrosswordComponent.api(a)
     ReactCrossword.api(a)

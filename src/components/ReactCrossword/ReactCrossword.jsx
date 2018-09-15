@@ -6,24 +6,28 @@ var cssUtils = require("common/css_utils");
 var WaitForCss = cssUtils.WaitForCss;
 var ScopedCss = cssUtils.ScopedCss;
 
+const resetHist = (board) => {
+  const hist = {};
+  _.each(board, function(row, j) {
+    hist[j] = {};
+    _.each(row, function(cell, i) {
+      hist[j][i] = {};
+    });
+  });
+  return hist;
+};
+
 export default class MyComponent extends React.Component{
 
   constructor(props){
     super(props);
     this.state = {
       board: props.board,
-      hist: {},
+      hist: resetHist(props.board),
       isAcross: true,
+      isFetchingSuggestions: false,
       suggestions: {},
     };
-
-    var self = this;
-    _.each(self.state.board, function(row, j) {
-      self.state.hist[j] = {};
-      _.each(row, function(cell, i) {
-        self.state.hist[j][i] = {};
-      });
-    });
 
   }
 
@@ -31,14 +35,12 @@ export default class MyComponent extends React.Component{
     console.log('component did update now', this.props, this.state);
   }
 
-  onClicked(j, i, e) {
+  onClicked(j, i) {
     const {
+      isAcross,
       x,
       y,
-      isAcross,
     } = this.state;
-
-
 
     this.setState({ x: i, y: j });
     // switch direction if clicking on the same square
@@ -48,8 +50,9 @@ export default class MyComponent extends React.Component{
   }
 
   onKeyDown(e) {
-    var s = String.fromCharCode(e.keyCode);
-    var isLetter = s.match(/[a-z]/i);
+    const { board } = this.state;
+    let s = String.fromCharCode(e.keyCode);
+    let isLetter = s.match(/[a-z]/i);
 
     console.log("PRESSED",e.keyCode);
 
@@ -57,8 +60,8 @@ export default class MyComponent extends React.Component{
     // keycode 9 = tab
     // keycode 65 to 128 is characters
     // keycode 33 to 65 is symbols or something
-    var inc = 1;
-    var character;
+    let inc = 1;
+    let character;
     // TODO: arrow keys should navigate around without entering character
     if (e.keyCode < 65) {
       character = '#';
@@ -94,12 +97,10 @@ export default class MyComponent extends React.Component{
     if (this.state.x < 0) { this.state.x = 0; }
     if (this.state.y < 0) { this.state.y = 0; }
 
-    var board = this.state.board;
     if (this.state.x >= board[0].length) { this.state.x = board[0].length - 1; }
     if (this.state.y >= board.length) { this.state.y = board.length - 1; }
 
     this.forceUpdate();
-
   }
 
   validateBoard() {
@@ -141,7 +142,9 @@ export default class MyComponent extends React.Component{
   getSuggestions() {
     console.log("GETTING SUGGESTIONS FOR WORD AT", this.state.x, this.state.y);
 
-    var isAcross = this.state.isAcross;
+    const { isAcross } = this.state;
+    this.setState({ isFetchingSuggestions: true });
+
     this
       .rpc
       .get_suggestions(this.state.board, this.state.x, this.state.y)
@@ -153,7 +156,7 @@ export default class MyComponent extends React.Component{
           res.across = null;
         }
 
-        this.setState({ suggestions: res });
+        this.setState({ suggestions: res, isFetchingSuggestions: false });
     });
 
   }
@@ -177,30 +180,70 @@ export default class MyComponent extends React.Component{
     return classes;
   }
 
+  addRow(row) {
+    this
+      .rpc
+      .insert_row(this.state.board, row)
+      .done((res, err) => {
+        console.log('res', res);
+        if (!err) {
+          this.setState({ board: res.board, hist: resetHist(res.board) });
+        } else {
+          console.log('error', err);
+        }
+      });
+  }
+  addColumn(col) {
+    this
+      .rpc
+      .insert_column(this.state.board, col)
+      .done((res, err) => {
+        if (!err) {
+          this.setState({ board: res.board, hist: resetHist(res.board) });
+        } else {
+          console.log('error', err);
+        }
+      });
+  }
+
   render() {
-    const { board, x, y, isAcross, suggestions } = this.state;
-    var hist = this.state.hist;
+    const {
+      board,
+      hist,
+      isAcross,
+      isFetchingSuggestions,
+      suggestions,
+      x,
+      y,
+    } = this.state;
+    const addColButton = (col) => <Button className={`${ScopedCss('Button')} addCol`}
+      onClick={() => this.addColumn(col)}
+      text={'+'}
+    />;
+    const addRowButton = (row) => <Button className={`${ScopedCss('Button')} addRow`}
+      onClick={() => this.addRow(row)}
+      text={'+'}
+    />;
     const rows = board.map((row, j) => {
       return (
         <div className='row' key={j}>
           {
             row.map((cell, i) => {
-              return <span type='text'
+              return <div type='text'
                 key={i}
                 className={ this.getCellClass(j, i, board[j][i]) }
-                onClick={(e) => { this.onClicked(j, i, e) }}>
+                onClick={(e) => { this.onClicked(j, i) }}>
 
                 {board[j][i]}
-
 
                 <span className='heatmap'>
                   {hist[j][i]['across']? "a:" + hist[j][i].across : ""}
                   <div> </div>
                   {hist[j][i]['down']? "d:" + hist[j][i].down : ""}
                 </span>
-
-
-              </span>
+                { j === 0 ? addColButton(i) : '' }
+                { i == 0 ? addRowButton(j) : '' }
+              </div>
             })
           }
         </div>
@@ -214,6 +257,7 @@ export default class MyComponent extends React.Component{
         </div>
         <Button className={ScopedCss("Button")}
           onClick={() => this.getSuggestions()}
+          isDisabled={isFetchingSuggestions}
           text={'Fetch Suggestions'} />
         <Button className={ScopedCss("Button")}
           onClick={() => this.validateBoard()}

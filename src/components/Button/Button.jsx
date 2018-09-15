@@ -11,8 +11,9 @@ class Button extends React.Component {
   render() {
     const {
       className,
+      isDisabled,
       onClick,
-      text
+      text,
     } = this.props;
     const onClickHandler = onClick ? onClick : this.onClick;
     return (
@@ -20,6 +21,7 @@ class Button extends React.Component {
         <button
           className={className ? className : ''}
           onClick={onClickHandler}
+          disabled={isDisabled}
         >
           {text}
         </button>

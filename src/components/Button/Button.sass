@@ -1,5 +1,36 @@
 & {
-  padding: 1em;
+  padding: .5em;
   margin: auto;
   margin-top: 20px;
+  border-radius: 5px;
+  &.addRow {
+    display: block;
+    position: absolute;
+    bottom: 0;
+    left: -2.5em;
+    padding: .25em;
+    transform: translateY(50%);
+    margin-top: 0;
+  }
+  &.addCol {
+    display: block;
+    position: absolute;
+    top: -2.5em;
+    right: 0;
+    margin-top: 0;
+    transform: translateX(50%);
+    padding: .25em;
+  }
+  &.default {
+    background-color: #7F7B7A;
+  }
+  &.primary {
+    background-color: #70D6FF;
+  }
+  &.secondary {
+    background-color: #78FFD6;
+  }
+  &.danger {
+    background-color: #FF9770;
+  }
 }
