@@ -1,6 +1,7 @@
-var Button = require('Button/Button.jsx');
-var List = require('./List.jsx');
-var React = require("vendor/react");
+const React = require("vendor/react");
+const Button = require('Button/Button.jsx');
+const List = require('./List.jsx');
+const CellMenu = require('./CellMenu.jsx');
 
 var cssUtils = require("common/css_utils");
 var WaitForCss = cssUtils.WaitForCss;
@@ -180,12 +181,11 @@ export default class MyComponent extends React.Component{
     return classes;
   }
 
-  addRow(row) {
+  removeRow(row) {
     this
       .rpc
-      .insert_row(this.state.board, row)
+      .remove_row(this.state.board, row)
       .done((res, err) => {
-        console.log('res', res);
         if (!err) {
           this.setState({ board: res.board, hist: resetHist(res.board) });
         } else {
@@ -193,10 +193,34 @@ export default class MyComponent extends React.Component{
         }
       });
   }
-  addColumn(col) {
+  addRow(row, dir='after') {
     this
       .rpc
-      .insert_column(this.state.board, col)
+      .insert_row(this.state.board, row, dir)
+      .done((res, err) => {
+        if (!err) {
+          this.setState({ board: res.board, hist: resetHist(res.board) });
+        } else {
+          console.log('error', err);
+        }
+      });
+  }
+  removeColumn(col) {
+    this
+      .rpc
+      .remove_column(this.state.board, col)
+      .done((res, err) => {
+        if (!err) {
+          this.setState({ board: res.board, hist: resetHist(res.board) });
+        } else {
+          console.log('error', err);
+        }
+      });
+  }
+  addColumn(col, dir='after') {
+    this
+      .rpc
+      .insert_column(this.state.board, col, dir)
       .done((res, err) => {
         if (!err) {
           this.setState({ board: res.board, hist: resetHist(res.board) });
@@ -215,15 +239,8 @@ export default class MyComponent extends React.Component{
       suggestions,
       x,
       y,
+      isCellMenuVisible,
     } = this.state;
-    const addColButton = (col) => <Button className={`${ScopedCss('Button')} addCol`}
-      onClick={() => this.addColumn(col)}
-      text={'+'}
-    />;
-    const addRowButton = (row) => <Button className={`${ScopedCss('Button')} addRow`}
-      onClick={() => this.addRow(row)}
-      text={'+'}
-    />;
     const rows = board.map((row, j) => {
       return (
         <div className='row' key={j}>
@@ -241,8 +258,6 @@ export default class MyComponent extends React.Component{
                   <div> </div>
                   {hist[j][i]['down']? "d:" + hist[j][i].down : ""}
                 </span>
-                { j === 0 ? addColButton(i) : '' }
-                { i == 0 ? addRowButton(j) : '' }
               </div>
             })
           }
@@ -254,6 +269,21 @@ export default class MyComponent extends React.Component{
       <div className={WaitForCss("Button")}>
         <div className='crossword noselect' onKeyDown={(e) => { this.onKeyDown(e) }} tabIndex="0" >
             { rows }
+            <Button className={ScopedCss('Button')}
+              onClick={() => this.setState({ isCellMenuVisible: !isCellMenuVisible})}
+              text={isCellMenuVisible ? 'Hide cell menu' : 'Show cell menu'}
+            />
+            <CellMenu
+              isVisible={isCellMenuVisible}
+              x={x}
+              y={y}
+              addColumn={() => this.addColumn(x)}
+              insertColumn={() => this.addColumn(x, 'before')}
+              removeColumn={() => this.removeColumn(x)}
+              addRow={() => this.addRow(y)}
+              insertRow={() => this.addRow(y, 'before')}
+              removeRow={() => this.removeRow(y)}
+            />
         </div>
         <Button className={ScopedCss("Button")}
           onClick={() => this.getSuggestions()}

@@ -51,30 +51,48 @@ def build_crossword(board):
     cw.board = board
     return cw
 
-def insert_row(cls, board, row):
-    print "insert row here"
-    new_board = []
-    for i in xrange(len(board)):
-        new_board.append(board[i])
-        if i == row:
-            new_board.append(["_"] * len(board[i]))
+def remove_row(cls, board, row):
+    new_board = board[:row] + board[row+1:]
     cw = build_crossword(new_board)
-    print "new board %s" % new_board
     return {
         "board": cw.board
     }
 
-def insert_column(cls, board, col):
+def insert_row(cls, board, row, direction):
+    new_board = []
+    for i in xrange(len(board)):
+        if i == row and direction == 'before':
+            new_board.append(["_"] * len(board[i]))
+        new_board.append(board[i])
+        if i == row and direction == 'after':
+            new_board.append(["_"] * len(board[i]))
+    cw = build_crossword(new_board)
+    return {
+        "board": cw.board
+    }
+
+def remove_column(cls, board, col):
+    new_board = []
+    for row in board:
+        new_row = row[:col] + row[col+1:]
+        new_board.append(new_row)
+    cw = build_crossword(new_board)
+    return {
+        "board": cw.board
+    }
+
+def insert_column(cls, board, col, direction):
     new_board = []
     for row in board:
         new_row = []
         for i in xrange(len(row)):
+            if i == col and direction == 'before':
+                new_row.append("_")
             new_row.append(row[i])
-            if i == col:
+            if i == col and direction == 'after':
                 new_row.append("_")
         new_board.append(new_row)
     cw = build_crossword(new_board)
-    print "new board %s" % new_board
     return {
         "board": cw.board
     }
@@ -119,7 +137,7 @@ def get_crossword():
 
     return flask.render_template("crossword.html", crossword=cc)
 
-API = [ get_suggestions, get_all_suggestions, rerender, cell_changed, insert_row, insert_column ]
+API = [ get_suggestions, get_all_suggestions, rerender, cell_changed, insert_row, insert_column, remove_row, remove_column ]
 for a in API:
     CrosswordComponent.api(a)
     ReactCrossword.api(a)
