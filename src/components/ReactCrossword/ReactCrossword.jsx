@@ -1,11 +1,9 @@
 const React = require("vendor/react");
-const Button = require('Button/Button.jsx');
 const List = require('./List.jsx');
 const CellMenu = require('./CellMenu.jsx');
 
-var cssUtils = require("common/css_utils");
-var WaitForCss = cssUtils.WaitForCss;
-var ScopedCss = cssUtils.ScopedCss;
+const Button = require('Button/Button.jsx');
+const ButtonCss = require('Button/Button.sass')
 
 const resetHist = (board) => {
   const hist = {};
@@ -266,10 +264,10 @@ export default class MyComponent extends React.Component{
     });
 
     return (
-      <div className={WaitForCss("Button")}>
+      <div>
         <div className='crossword noselect' onKeyDown={(e) => { this.onKeyDown(e) }} tabIndex="0" >
             { rows }
-            <Button className={ScopedCss('Button')}
+            <Button className={ButtonCss.className}
               onClick={() => this.setState({ isCellMenuVisible: !isCellMenuVisible})}
               text={isCellMenuVisible ? 'Hide cell menu' : 'Show cell menu'}
             />
@@ -285,11 +283,11 @@ export default class MyComponent extends React.Component{
               removeRow={() => this.removeRow(y)}
             />
         </div>
-        <Button className={ScopedCss("Button")}
+        <Button className={ButtonCss.className}
           onClick={() => this.getSuggestions()}
           isDisabled={isFetchingSuggestions}
           text={'Fetch Suggestions'} />
-        <Button className={ScopedCss("Button")}
+        <Button className={ButtonCss.className}
           onClick={() => this.validateBoard()}
           text={'Validate Board'} />
         <List
