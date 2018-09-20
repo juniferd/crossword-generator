@@ -1,4 +1,6 @@
 import flask
+import models
+import time
 app = flask.Flask(__name__)
 
 import crossword
@@ -127,8 +129,51 @@ def get_suggestions(cls, board, x, y, down=False, across=False):
         "down" : list(possible2)
     }
 
+def board_to_str(board):
+    s = []
+    for row in board:
+        s.append(''.join(row))
+    s = '\n'.join(s)
+    return s
+
+def update_board(cls, board, boardId):
+    s = board_to_str(board)
+    c = models.Board.select().where(models.Board.id == boardId).get()
+    c.board = s
+    c.save()
+    print c.board
+    return {
+        "success": True
+    }
+
+def save_board(cls, board):
+    s = board_to_str(board)
+    b = models.Board.create(board=s, created_at=time.time())
+    return {
+        "boardId": b.id,
+        "boardUrl" : flask.url_for('get_crossword', id=b.id)
+    }
+
+@app.route('/crossword/<id>')
+def get_crossword(id):
+    c = models.Board.select().where(models.Board.id == id).get()
+    print c.board
+    cw = crossword.Crossword()
+    if type(c.board) == str or type(c.board) == unicode:
+        board = [ list(row) for row in c.board.split('\n') ]
+        cw.board = board
+        cw.board_height = len(board)
+        cw.board_length = len(board[0])
+
+    print type(c.board)
+
+    cc = ReactCrossword(board=cw.board, boardId=id)
+    cc.set_ref("crossword")
+
+    return flask.render_template("crossword.html", crossword=cc)
+
 @app.route('/')
-def get_crossword():
+def get_index():
     cw = crossword.Crossword()
 
     cc = ReactCrossword(board=cw.board)
@@ -137,7 +182,7 @@ def get_crossword():
 
     return flask.render_template("crossword.html", crossword=cc)
 
-API = [ get_suggestions, get_all_suggestions, rerender, cell_changed, insert_row, insert_column, remove_row, remove_column ]
+API = [ get_suggestions, get_all_suggestions, rerender, cell_changed, insert_row, insert_column, remove_row, remove_column, save_board, update_board ]
 for a in API:
     CrosswordComponent.api(a)
     ReactCrossword.api(a)

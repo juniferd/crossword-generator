@@ -26,6 +26,7 @@ export default class MyComponent extends React.Component{
       isAcross: true,
       isFetchingSuggestions: false,
       suggestions: {},
+      boardId: props.boardId,
     };
 
   }
@@ -227,6 +228,35 @@ export default class MyComponent extends React.Component{
         }
       });
   }
+  saveBoard() {
+    const { boardId, board } = this.state;
+    if (boardId) {
+      // update board
+      this
+        .rpc
+        .update_board(board, boardId)
+        .done((res, err) => {
+          if (!err) {
+            console.log('success', res);
+          } else {
+            console.log('error', err);
+          }
+        });
+    } else {
+      // save new board
+      this
+        .rpc
+        .save_board(this.state.board)
+        .done((res, err) => {
+          if (!err) {
+            this.setState({ boardId: res.boardId });
+            window.history.pushState({}, 'test', res.boardUrl);
+          } else {
+            console.log('error', err);
+          }
+        });
+    }
+  }
 
   render() {
     const {
@@ -290,6 +320,9 @@ export default class MyComponent extends React.Component{
         <Button className={ButtonCss.className}
           onClick={() => this.validateBoard()}
           text={'Validate Board'} />
+        <Button className={ButtonCss.className}
+          onClick={() => this.saveBoard()}
+          text={'Save'} />
         <List
           title={'Across suggestions'}
           suggestions={suggestions.across} />
