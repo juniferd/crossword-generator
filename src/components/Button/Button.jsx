@@ -1,4 +1,5 @@
 var React = require("vendor/react");
+const ButtonCss = require('Button/Button.sass')
 
 class Button extends React.Component {
   constructor(props) {
@@ -19,10 +20,9 @@ class Button extends React.Component {
     return (
       <div>
         <button
-          className={className ? className : ''}
+          className={ButtonCss.className}
           onClick={onClickHandler}
-          disabled={isDisabled}
-        >
+          disabled={isDisabled} >
           {text}
         </button>
       </div>

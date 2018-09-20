@@ -18,21 +18,19 @@ def jsx_compile(data, fname):
 pudgy.ReactComponent.set_jsx_compiler(jsx_compile)
 # pudgy.ReactComponent.add_babel_presets("@babel/preset-env")
 
-class CrosswordComponent(pudgy.JinjaComponent, pudgy.SassComponent,
-    pudgy.BackboneComponent, pudgy.ServerBridge):
+class Button(pudgy.ReactComponent, pudgy.SassComponent):
     pass
 
 class ReactCrossword(pudgy.ReactComponent, pudgy.SassComponent,
     pudgy.ServerBridge):
     pass
 
-class Button(pudgy.ReactComponent, pudgy.SassComponent):
-    pass
-
+@ReactCrossword.api
 def cell_changed(cls, x, y):
     print("CELL CHANGED", x,y)
     cls.call("cell_changed", x, y);
 
+@ReactCrossword.api
 def rerender(cls, board):
     cw = crossword.Crossword()
     cw.board_height = len(board)
@@ -45,7 +43,6 @@ def rerender(cls, board):
 
     return cls.replace_html(cc.render())
 
-
 def build_crossword(board):
     cw = crossword.Crossword()
     cw.board_height = len(board)
@@ -53,6 +50,7 @@ def build_crossword(board):
     cw.board = board
     return cw
 
+@ReactCrossword.api
 def remove_row(cls, board, row):
     new_board = board[:row] + board[row+1:]
     cw = build_crossword(new_board)
@@ -60,6 +58,7 @@ def remove_row(cls, board, row):
         "board": cw.board
     }
 
+@ReactCrossword.api
 def insert_row(cls, board, row, direction):
     new_board = []
     for i in xrange(len(board)):
@@ -73,6 +72,7 @@ def insert_row(cls, board, row, direction):
         "board": cw.board
     }
 
+@ReactCrossword.api
 def remove_column(cls, board, col):
     new_board = []
     for row in board:
@@ -83,6 +83,7 @@ def remove_column(cls, board, col):
         "board": cw.board
     }
 
+@ReactCrossword.api
 def insert_column(cls, board, col, direction):
     new_board = []
     for row in board:
@@ -99,6 +100,7 @@ def insert_column(cls, board, col, direction):
         "board": cw.board
     }
 
+@ReactCrossword.api
 def get_all_suggestions(cls, board):
     cw = build_crossword(board)
     return {
@@ -106,6 +108,7 @@ def get_all_suggestions(cls, board):
     }
 
 
+@ReactCrossword.api
 def get_suggestions(cls, board, x, y, down=False, across=False):
     cw = build_crossword(board)
 
@@ -136,6 +139,7 @@ def board_to_str(board):
     s = '\n'.join(s)
     return s
 
+@ReactCrossword.api
 def update_board(cls, board, boardId):
     s = board_to_str(board)
     c = models.Board.select().where(models.Board.id == boardId).get()
@@ -146,6 +150,7 @@ def update_board(cls, board, boardId):
         "success": True
     }
 
+@ReactCrossword.api
 def save_board(cls, board):
     s = board_to_str(board)
     b = models.Board.create(board=s, created_at=time.time())
@@ -181,11 +186,6 @@ def get_index():
     cc.set_ref("crossword")
 
     return flask.render_template("crossword.html", crossword=cc)
-
-API = [ get_suggestions, get_all_suggestions, rerender, cell_changed, insert_row, insert_column, remove_row, remove_column, save_board, update_board ]
-for a in API:
-    CrosswordComponent.api(a)
-    ReactCrossword.api(a)
 
 if __name__ == "__main__":
     app.run(port=3333)

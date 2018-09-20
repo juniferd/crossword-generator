@@ -3,7 +3,6 @@ const List = require('./List.jsx');
 const CellMenu = require('./CellMenu.jsx');
 
 const Button = require('Button/Button.jsx');
-const ButtonCss = require('Button/Button.sass')
 
 const resetHist = (board) => {
   const hist = {};
@@ -297,7 +296,7 @@ export default class MyComponent extends React.Component{
       <div>
         <div className='crossword noselect' onKeyDown={(e) => { this.onKeyDown(e) }} tabIndex="0" >
             { rows }
-            <Button className={ButtonCss.className}
+            <Button
               onClick={() => this.setState({ isCellMenuVisible: !isCellMenuVisible})}
               text={isCellMenuVisible ? 'Hide cell menu' : 'Show cell menu'}
             />
@@ -313,14 +312,14 @@ export default class MyComponent extends React.Component{
               removeRow={() => this.removeRow(y)}
             />
         </div>
-        <Button className={ButtonCss.className}
+        <Button
           onClick={() => this.getSuggestions()}
           isDisabled={isFetchingSuggestions}
           text={'Fetch Suggestions'} />
-        <Button className={ButtonCss.className}
+        <Button
           onClick={() => this.validateBoard()}
           text={'Validate Board'} />
-        <Button className={ButtonCss.className}
+        <Button
           onClick={() => this.saveBoard()}
           text={'Save'} />
         <List
