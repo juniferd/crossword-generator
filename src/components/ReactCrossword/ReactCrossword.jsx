@@ -1,4 +1,4 @@
-const React = require("vendor/react");
+const React = $require("react");
 const List = require('./List.jsx');
 const CellMenu = require('./CellMenu.jsx');
 

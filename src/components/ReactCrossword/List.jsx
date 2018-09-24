@@ -1,4 +1,4 @@
-var React = require("vendor/react");
+var React = $require("react");
 
 class List extends React.Component {
   constructor(props) {

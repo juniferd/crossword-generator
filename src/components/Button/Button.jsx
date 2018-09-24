@@ -1,4 +1,4 @@
-var React = require("vendor/react");
+var React = $require("react");
 const ButtonCss = require('Button/Button.sass')
 
 class Button extends React.Component {

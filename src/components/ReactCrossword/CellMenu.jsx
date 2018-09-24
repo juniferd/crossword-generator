@@ -1,4 +1,4 @@
-const React = require('vendor/react');
+const React = $require('react');
 const Button = require('Button/Button.jsx');
 
 class CellMenu extends React.Component {
