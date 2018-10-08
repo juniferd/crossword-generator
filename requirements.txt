@@ -8,7 +8,7 @@ Jinja2==2.10
 libsass==0.14.5
 MarkupSafe==1.0
 peewee==3.7.0
-pudgy==0.0.10
+pudgy==0.0.29
 pystache==0.5.4
 six==1.11.0
 Werkzeug==0.14.1

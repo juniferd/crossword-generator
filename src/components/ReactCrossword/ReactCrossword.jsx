@@ -1,22 +1,10 @@
 const React = $require("react");
 const List = require('./List.jsx');
 const CellMenu = require('./CellMenu.jsx');
-
 const Button = require('Button/Button.jsx');
+const resetHist = require('core/resetHist.jsx');
 
-const resetHist = (board) => {
-  const hist = {};
-  _.each(board, function(row, j) {
-    hist[j] = {};
-    _.each(row, function(cell, i) {
-      hist[j][i] = {};
-    });
-  });
-  return hist;
-};
-
-export default class MyComponent extends React.Component{
-
+export default class Crossword extends React.Component{
   constructor(props){
     super(props);
     this.state = {
@@ -27,7 +15,6 @@ export default class MyComponent extends React.Component{
       suggestions: {},
       boardId: props.boardId,
     };
-
   }
 
   componentDidUpdate(prevProps, prevState) {
@@ -227,6 +214,25 @@ export default class MyComponent extends React.Component{
         }
       });
   }
+  nextCrossword() {
+    const { boardId } = this.state;
+    const nextBoard = parseInt(boardId, 10) + 1;
+    this
+      .rpc
+      .load_board(nextBoard)
+      .done((res, err) => {
+        if (!err) {
+          window.history.pushState({res}, '', res.url);
+          this.setState({
+            board: res.board,
+            hist: resetHist(res.board),
+            boardId: res.id,
+          });
+        } else {
+          console.log('error', err);
+        }
+      });
+  }
   saveBoard() {
     const { boardId, board } = this.state;
     if (boardId) {
@@ -322,6 +328,9 @@ export default class MyComponent extends React.Component{
         <Button
           onClick={() => this.saveBoard()}
           text={'Save'} />
+        <Button
+          onClick={() => this.nextCrossword()}
+          text={'Next'} />
         <List
           title={'Across suggestions'}
           suggestions={suggestions.across} />
